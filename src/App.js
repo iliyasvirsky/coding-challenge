@@ -1,57 +1,95 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
 import './App.css';
+
+
+function downloadCSV(csv, filename) {
+    var csvFile;
+    var downloadLink;
+
+  	if (window.Blob == undefined || window.URL == undefined || window.URL.createObjectURL == undefined) {
+  		alert("Your browser doesn't support Blobs");
+  		return;
+  	}
+
+    csvFile = new Blob([csv], {type:"text/csv"});
+    downloadLink = document.createElement("a");
+    downloadLink.download = filename;
+    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+}
+
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      name: '',
-      greeting: ''
+      users: []
     };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleExport = this.handleExport.bind(this);
   }
 
   handleChange(event) {
     this.setState({ name: event.target.value });
   }
 
+  handleExport(event) {
+  const csv = this.state.users.map((item) => {
+    return [
+       `${item.name.title} ${item.name.first} ${item.name.last}`,
+       item.email, item.phone || item.cell,
+       item.dob.age, item.gender,
+    ];
+  });
+  csv.unshift(['Name', 'Email', 'Phone', 'Age', 'Gender']);
+  downloadCSV(csv.join("\n"), 'users');
+  }
+
+  getTableContent = () => {
+    const users = this.state.users;
+    if (!users.length) return null;
+    const iterateItem = (item) => {
+       return item.map(function (nextItem, j) {
+         return (
+            <tr key={nextItem.phone}>
+               <td>Name: {nextItem.name.title} {nextItem.name.first} {nextItem.name.last}</td>
+               <td>Email: {nextItem.email}</td>
+               <td>Phone: {nextItem.phone || nextItem.cell}</td>
+               <td>Age: {nextItem.dob.age}</td>
+               <td>Gender: {nextItem.gender}</td>
+               <td>Picture: <img width="60" height="60" alt={nextItem.name.first} src={nextItem.picture.medium} /></td>
+            </tr>
+         );
+       })
+    }
+    return (
+        <table id="customers">
+          <tbody>
+            {iterateItem(users)}
+          </tbody>
+        </table>
+    );
+  }
+
   handleSubmit(event) {
     event.preventDefault();
-    fetch(`/api/greeting?name=${encodeURIComponent(this.state.name)}`)
+    // basic fetch to get users
+    fetch('/api/getusers')
       .then(response => response.json())
-      .then(state => this.setState(state));
+      .then(users => {
+        this.setState({users});
+      });
   }
 
   render() {
     return (
       <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <form onSubmit={this.handleSubmit}>
-            <label htmlFor="name">Enter your name: </label>
-            <input
-              id="name"
-              type="text"
-              value={this.state.name}
-              onChange={this.handleChange}
-            />
-            <button type="submit">Submit</button>
-          </form>
-          <p>{this.state.greeting}</p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
+        {!!this.state.users.length && <button className="exportButton" onClick={this.handleExport}>Export CSV</button>}
+        {!this.state.users.length && <button className="fetchButton" onClick={this.handleSubmit}>Fetch Users</button>}
+        <div>{this.getTableContent()}</div>
       </div>
     );
   }

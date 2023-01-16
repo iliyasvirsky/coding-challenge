@@ -1,8 +1,9 @@
 {
-  "name": "react-express-starter",
+  "name": "coding-challenge",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "dependencies": {
+    "node-fetch": "2.6.6",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
     "react-scripts": "^5.0.1"
@@ -10,8 +11,6 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
     "server": "node-env-run server --exec nodemon | pino-colada",
     "dev": "run-p server start"
   },
